@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid-2">
+    <!-- Chat Panel -->
+    <div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-robot"></i>
+                <span>ZARIP AI Assistant</span>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message bot">
+                        <div class="message-bubble">
+                            <i class="fas fa-robot" style="margin-right: 8px;"></i>
+                            Hello! I'm your ZARIP AI Assistant. I can help you understand:
+                            <ul style="margin-top: 8px; margin-left: 20px;">
+                                <li>📊 VaR and CVaR risk metrics</li>
+                                <li>📈 Tail Ratio and what it means</li>
+                                <li>⚠️ Basis risk in index insurance</li>
+                                <li>🔬 Extreme Value Theory (EVT)</li>
+                                <li>💰 Smart subsidy mechanism</li>
+                                <li>📚 Insurance and financial literacy</li>
+                            </ul>
+                            Ask me anything about the simulation results or insurance concepts!
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask me about VaR, CVaR, subsidies, or financial literacy..." onkeypress="if(event.key==='Enter') askQuestion()">
+                    <button class="chat-send" onclick="askQuestion()">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Questions -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-question-circle"></i>
+                <span>Quick Questions</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <button class="btn btn-outline" onclick="quickQuestion('What is VaR?')">What is VaR?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What is CVaR?')">What is CVaR?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What is basis risk?')">What is basis risk?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('How does the smart subsidy work?')">How does subsidy work?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What is Extreme Value Theory?')">What is EVT?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('How much capital should an insurer hold?')">Capital requirements?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What does &quot;leaving no one behind&quot; mean?')">Leaving no one behind?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What is index insurance?')">What is index insurance?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What is the optimal premium for Region V?')">Optimal premium for Region V?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('How to make insurance more affordable?')">How to make insurance affordable?</button>
+                <button class="btn btn-outline" onclick="quickQuestion('What is a fair premium rate?')">What is a fair premium rate?</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Context Panel -->
+    <div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-chart-line"></i>
+                <span>Current Simulation Results</span>
+            </div>
+            
+            <div id="resultsContext" style="text-align: center; padding: 2rem; color: #666;">
+                <i class="fas fa-chart-line" style="font-size: 3rem; opacity: 0.5;"></i>
+                <p style="margin-top: 1rem;">No simulation results loaded.</p>
+                <p>Go to the <a href="/" style="color: #1a5276;">Dashboard</a> and run a simulation first.</p>
+            </div>
+        </div>
+        
+        <!-- Key Concepts -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Key Concepts Explained</span>
+            </div>
+            <div style="font-size: 0.9rem;">
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 600; cursor: pointer;">📊 Value-at-Risk (VaR)</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">VaR answers: "What's the maximum I can expect to lose?" At 95% confidence, there's a 5% chance losses exceed this amount.</p>
+                </details>
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 600; cursor: pointer;">📈 Conditional VaR (CVaR)</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">CVaR answers: "If things go really bad, how bad on average?" It measures the average loss beyond VaR.</p>
+                </details>
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 600; cursor: pointer;">⚠️ Basis Risk</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">The mismatch between the insurance index (rainfall at a station) and actual farm conditions.</p>
+                </details>
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 600; cursor: pointer;">💰 Smart Subsidy</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">Tiered premium support: 25% for low-risk regions, up to 70% for high-risk, low-income regions.</p>
+                </details>
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 600; cursor: pointer;">🔬 Extreme Value Theory (EVT)</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">Statistical method for estimating rare, extreme events not seen in historical data.</p>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentResults = null;
+    
+    // Load results from session storage on page load
+    const storedResults = sessionStorage.getItem('zarip_results');
+    if (storedResults) {
+        currentResults = JSON.parse(storedResults);
+        updateResultsContext(currentResults);
+    }
+    
+    function updateResultsContext(results) {
+        const contextDiv = document.getElementById('resultsContext');
+        const p = results.portfolio;
+        
+        contextDiv.innerHTML = `
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px;">
+                <h5><i class="fas fa-chart-line"></i> Portfolio Summary</h5>
+                <table style="width: 100%; font-size: 0.85rem;">
+                    <tr><td>Expected Loss:</td><td style="text-align: right;"><strong>${formatCurrency(p.expected_loss_usd)}</strong></td></tr>
+                    <tr><td>VaR 95%:</td><td style="text-align: right;"><strong>${formatCurrency(p.var_95_usd)}</strong></td></tr>
+                    <tr><td>CVaR 95%:</td><td style="text-align: right;"><strong>${formatCurrency(p.cvar_95_usd)}</strong></td></tr>
+                    <tr><td>Tail Ratio:</td><td style="text-align: right;"><strong>${p.tail_ratio.toFixed(2)}</strong></td></tr>
+                    <tr><td>State Subsidy:</td><td style="text-align: right;"><strong>${formatCurrency(p.state_subsidy_usd)}</strong></td></tr>
+                </table>
+            </div>
+        `;
+    }
+    
+    function formatCurrency(value) {
+        if (value >= 1e9) return `$${(value/1e9).toFixed(2)}B`;
+        if (value >= 1e6) return `$${(value/1e6).toFixed(2)}M`;
+        if (value >= 1e3) return `$${(value/1e3).toFixed(0)}K`;
+        return `$${value.toFixed(0)}`;
+    }
+    
+    function addMessage(sender, text, isUser = false) {
+        const messagesDiv = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isUser ? 'user' : 'bot'}`;
+        
+        const icon = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        
+        messageDiv.innerHTML = `
+            <div class="message-bubble">
+                ${icon} ${text.replace(/\n/g, '<br>')}
+            </div>
+        `;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    
+    async function askQuestion() {
+        const input = document.getElementById('chatInput');
+        const question = input.value.trim();
+        
+        if (!question) return;
+        
+        addMessage('You', question, true);
+        input.value = '';
+        
+        try {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    question: question,
+                    results: currentResults 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                let answerText = `**${data.answer.title}**\n\n${data.answer.content}`;
+                addMessage('ZARIP AI', answerText, false);
+            } else {
+                addMessage('ZARIP AI', 'Sorry, I encountered an error. Please try again.', false);
+            }
+        } catch (error) {
+            addMessage('ZARIP AI', 'Sorry, I had trouble connecting. Please try again.', false);
+        }
+    }
+    
+    function quickQuestion(question) {
+        document.getElementById('chatInput').value = question;
+        askQuestion();
+    }
+    
+    function formatCurrency(value) {
+        if (value >= 1e9) return `$${(value/1e9).toFixed(2)}B`;
+        if (value >= 1e6) return `$${(value/1e6).toFixed(2)}M`;
+        if (value >= 1e3) return `$${(value/1e3).toFixed(0)}K`;
+        return `$${value.toFixed(0)}`;
+    }
+</script>
+{% endblock %}
