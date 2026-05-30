@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-hero">
+    <div class="hero-panel">
+        <h2>ZARIP AI Policy Analyst</h2>
+        <p>Ask about capital adequacy, fiscal liability, smart subsidies, basis risk, regional pricing, and implementation steps. When dashboard results are loaded, answers use your current simulation.</p>
+        <div class="hero-actions">
+            <button class="btn" onclick="quickQuestion('Summarise the current results for IPEC')"><i class="fas fa-chart-line"></i> Summarise Results</button>
+            <button class="btn" onclick="quickQuestion('What should ZICARP use as the SCR target?')"><i class="fas fa-shield-alt"></i> SCR Target</button>
+            <button class="btn" onclick="quickQuestion('Explain the fiscal liability and budget implications')"><i class="fas fa-landmark"></i> Fiscal View</button>
+        </div>
+    </div>
+    <div class="status-panel">
+        <strong><i class="fas fa-circle-nodes"></i> Assistant Modes</strong>
+        <div class="status-list">
+            <div class="status-item"><span>Risk interpretation</span><strong>VaR / CVaR</strong></div>
+            <div class="status-item"><span>Policy advice</span><strong>ZICARP / subsidies</strong></div>
+            <div class="status-item"><span>Consumer protection</span><strong>Basis risk</strong></div>
+        </div>
+    </div>
+</div>
+
+<div class="assistant-shell">
+    <div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-robot"></i>
+                <span>ZARIP AI Assistant</span>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message bot">
+                        <div class="message-bubble">
+                            <i class="fas fa-robot" style="margin-right: 8px;"></i>
+                            Hello. I can interpret live ZARIP outputs and convert them into IPEC-ready actions:
+                            <ul style="margin-top: 8px; margin-left: 20px;">
+                                <li>VaR, CVaR, and ZICARP capital targets</li>
+                                <li>Contingent fiscal liability and budget planning</li>
+                                <li>Regional premium and subsidy decisions</li>
+                                <li>Basis risk disclosures for parametric products</li>
+                                <li>Implementation roadmap and sensitivity priorities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask about fiscal liability, SCR, subsidies, regional risk, basis risk..." onkeypress="if(event.key==='Enter') askQuestion()">
+                    <button class="chat-send" onclick="askQuestion()">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-bolt"></i>
+                <span>Policy Prompts</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <button class="assistant-chip" onclick="quickQuestion('Summarise the current results for IPEC')">Current results</button>
+                <button class="assistant-chip" onclick="quickQuestion('What should ZICARP use as the SCR target?')">SCR target</button>
+                <button class="assistant-chip" onclick="quickQuestion('Explain the fiscal liability and budget implications')">Fiscal liability</button>
+                <button class="assistant-chip" onclick="quickQuestion('Which region has the highest risk and why?')">Regional risk</button>
+                <button class="assistant-chip" onclick="quickQuestion('What basis risk disclosures should IPEC require?')">Basis disclosure</button>
+                <button class="assistant-chip" onclick="quickQuestion('What are the implementation next steps?')">Roadmap</button>
+                <button class="assistant-chip" onclick="quickQuestion('What sensitivity priorities should be monitored?')">Sensitivity</button>
+                <button class="assistant-chip" onclick="quickQuestion('What is CVaR?')">CVaR basics</button>
+                <button class="assistant-chip" onclick="quickQuestion('How does the smart subsidy work?')">Smart subsidy</button>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-chart-line"></i>
+                <span>Current Simulation Context</span>
+            </div>
+            <div id="resultsContext" style="text-align: center; padding: 2rem; color: #666;">
+                <i class="fas fa-chart-line" style="font-size: 3rem; opacity: 0.5;"></i>
+                <p style="margin-top: 1rem;">No simulation results loaded.</p>
+                <p>Go to the <a href="/" style="color: #174a63;">Dashboard</a> and run a simulation first.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Reference Concepts</span>
+            </div>
+            <div style="font-size: 0.9rem;">
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 700; cursor: pointer;">Value-at-Risk (VaR)</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">The loss threshold exceeded only in the selected tail probability. VaR 95% is a 1-in-20-year planning threshold.</p>
+                </details>
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 700; cursor: pointer;">Conditional VaR (CVaR)</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">The average loss once the VaR threshold is breached. It is the stronger solvency metric for tail-heavy drought risk.</p>
+                </details>
+                <details style="margin-bottom: 0.8rem;">
+                    <summary style="font-weight: 700; cursor: pointer;">Basis Risk</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">The mismatch between index-triggered payouts and actual farm losses. It must be disclosed for trust and consumer protection.</p>
+                </details>
+                <details>
+                    <summary style="font-weight: 700; cursor: pointer;">Smart Subsidy</summary>
+                    <p style="margin-top: 0.5rem; padding-left: 1rem;">A tiered State premium contribution that targets higher support to vulnerable regions while preserving farmer co-payment.</p>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentResults = null;
+
+    const storedResults = sessionStorage.getItem('zarip_results');
+    if (storedResults) {
+        currentResults = JSON.parse(storedResults);
+        updateResultsContext(currentResults);
+    }
+
+    function updateResultsContext(results) {
+        const contextDiv = document.getElementById('resultsContext');
+        const p = results.portfolio;
+        const policy = results.policy_scorecard || {};
+
+        contextDiv.innerHTML = `
+            <div class="grid-3" style="grid-template-columns: 1fr; text-align: left;">
+                <div class="metric-card">
+                    <div class="value">${formatCurrency(p.expected_loss_usd)}</div>
+                    <div class="label">Expected Annual Claims</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value">${formatCurrency(p.cvar_99_usd)}</div>
+                    <div class="label">CVaR 99% SCR Target</div>
+                </div>
+                <div class="metric-card">
+                    <div class="value">${formatCurrency(p.cfl_95_usd)}</div>
+                    <div class="label">1-in-20 CFL</div>
+                </div>
+                <div class="insight-panel">
+                    <strong>Policy access:</strong> ${(policy.covered_households || p.covered_households || 0).toLocaleString()} households<br>
+                    <strong>State support:</strong> ${formatCurrency(p.state_subsidy_usd)}<br>
+                    <strong>Tail ratio:</strong> ${p.tail_ratio.toFixed(2)}
+                </div>
+            </div>
+        `;
+    }
+
+    function formatCurrency(value) {
+        if (!Number.isFinite(value)) return '$0';
+        if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+        if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+        if (value >= 1e3) return `$${(value / 1e3).toFixed(0)}K`;
+        return `$${value.toFixed(0)}`;
+    }
+
+    function renderAnswer(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^- (.*)$/gm, '<div style="margin: 0.35rem 0;">&bull; $1</div>')
+            .replace(/\n/g, '<br>');
+    }
+
+    function addMessage(sender, text, isUser = false) {
+        const messagesDiv = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isUser ? 'user' : 'bot'}`;
+        const icon = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+
+        messageDiv.innerHTML = `
+            <div class="message-bubble">
+                ${icon} ${renderAnswer(text)}
+            </div>
+        `;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function askQuestion() {
+        const input = document.getElementById('chatInput');
+        const question = input.value.trim();
+        if (!question) return;
+
+        addMessage('You', question, true);
+        input.value = '';
+        addMessage('ZARIP AI', 'Thinking through the current model context...', false);
+
+        try {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question, results: currentResults })
+            });
+            const data = await response.json();
+            document.querySelector('#chatMessages .chat-message.bot:last-child').remove();
+
+            if (data.success) {
+                addMessage('ZARIP AI', `**${data.answer.title}**\n\n${data.answer.content}`, false);
+            } else {
+                addMessage('ZARIP AI', 'Sorry, I could not answer that request. Please try again.', false);
+            }
+        } catch (error) {
+            document.querySelector('#chatMessages .chat-message.bot:last-child')?.remove();
+            addMessage('ZARIP AI', 'I had trouble connecting to the assistant endpoint. Please try again.', false);
+        }
+    }
+
+    function quickQuestion(question) {
+        document.getElementById('chatInput').value = question;
+        askQuestion();
+    }
+</script>
+{% endblock %}
